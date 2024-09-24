@@ -81,11 +81,13 @@ export class UsersService {
     return `This action removes a #${id} user`;
   }
 
-  private mapEntityToDto(userEntity: User): UserResponseDto {
+  mapEntityToDto(userEntity: User): UserResponseDto {
     return {
       id: userEntity.id,
       name: userEntity.name,
       email: userEntity.email,
+      createdAt: userEntity.created_at,
+      updatedAt: userEntity.created_at,
     };
   }
 }

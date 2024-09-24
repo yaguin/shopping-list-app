@@ -1,9 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { compareSync } from 'bcrypt';
-import { signInDto, signInResponseDto } from './dto/sign-in.dto';
+import { signInResponseDto } from './dto/sign-in.dto';
 import { ConfigService } from '@nestjs/config';
+import { UserResponseDto } from '../users/dto/user-response.dto';
+import { User as UserEntity } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -18,18 +20,23 @@ export class AuthService {
     );
   }
 
-  async signIn(signInDto: signInDto): Promise<signInResponseDto> {
-    const user = await this.usersService.findByEmail(signInDto.email);
-
-    if (!user || !compareSync(signInDto.password, user.password)) {
-      throw new UnauthorizedException();
-    }
-
+  async signIn(user: UserEntity): Promise<signInResponseDto> {
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
     return {
       access_token: token,
       expiresIn: this.jwtExpirationTimeInSeconds,
     };
+  }
+
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserResponseDto | null> {
+    const user = await this.usersService.findByEmail(email);
+    if (user && compareSync(password, user.password)) {
+      return this.usersService.mapEntityToDto(user);
+    }
+    return null;
   }
 }
